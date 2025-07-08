@@ -84,10 +84,10 @@ function App() {
                     mutationDescription = `p.${wildTypeAa}${beginPos}${mutatedTypeAa}`;
                 } else if (wildTypeAa && !mutatedTypeAa && beginPos === endPos) {
                     mutationDescription = `p.del${wildTypeAa}${beginPos}`;
+                } else if (!wildTypeAa && mutatedTypeAa) { // Insertion
+                    mutationDescription = `p.ins{mutatedTypeAa}${beginPos}`;
                 } else if (wildTypeAa && !mutatedTypeAa && beginPos !== endPos) {
                     mutationDescription = `p.del${wildTypeAa}${beginPos}-${endPos}`;
-                } else if (!wildTypeAa && mutatedTypeAa) {
-                    mutationDescription = `p.ins{mutatedTypeAa}${beginPos}`;
                 }
 
                 if (feature.description) {
@@ -287,12 +287,11 @@ function App() {
         <div
             className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800"
             style={{
-                background: 'linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%)' // Subtle gradient background
+                backgroundColor: '#ffffff' // Pure white background
             }}
         >
-            <div className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl
-                            transform transition-all duration-300 hover:scale-[1.01] hover:shadow-3xl
-                            border border-gray-200 z-10">
+            <div className="relative bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl
+                            border border-gray-200 z-10"> {/* Removed hover effects */}
                 <div className="flex flex-col items-center mb-6">
                     {/* No Logo - Title is prominent */}
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
@@ -334,10 +333,10 @@ function App() {
                         onClick={processFastaFile}
                         disabled={!fastaFile || isLoading}
                         className={`w-full py-3.5 px-6 rounded-xl text-white font-bold text-xl
-                                    transition-all duration-300 ease-in-out transform
+                                    transition-all duration-300 ease-in-out
                                     ${!fastaFile || isLoading
                                         ? 'bg-gray-400 cursor-not-allowed opacity-75'
-                                        : 'bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 active:from-blue-900 active:to-indigo-950 shadow-lg hover:shadow-xl'
+                                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md' // Flatter button style
                                     }`}
                     >
                         {isLoading ? (
@@ -369,9 +368,8 @@ function App() {
                         <div className="text-center">
                             <button
                                 onClick={handleDownload}
-                                className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-green-600 to-teal-700 text-white font-bold text-lg
-                                            hover:from-green-700 hover:to-teal-800 active:from-green-800 active:to-teal-900 shadow-md hover:shadow-lg
-                                            transition-all duration-300 ease-in-out transform"
+                                className="py-2.5 px-6 rounded-xl bg-green-600 text-white font-bold text-lg
+                                            hover:bg-green-700 active:bg-green-800 shadow-md" // Flatter button style
                             >
                                 Download Combined FASTA
                             </button>
