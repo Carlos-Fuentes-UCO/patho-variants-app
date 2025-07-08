@@ -148,7 +148,7 @@ function App() {
                         const cleanedCanonicalHeader = lstripString(canonicalHeaderLine.trim(), '>');
                         const fastaHeader = (
                             `>${cleanedCanonicalHeader} ` +
-                            `| PATHOGENIC_VARIANT:${mutationDescription} ` + // Changed to English
+                            `| PATHOGENIC_VARIANT:${mutationDescription} ` +
                             `| Genomic:${firstGenomicLoc}`
                         );
                         pathogenicVariantSequences.push(`${fastaHeader}\n${modifiedSequence}`);
@@ -284,31 +284,32 @@ function App() {
     };
 
     return (
-        <div 
-            className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800 bg-cover bg-center"
-            style={{ backgroundImage: 'url("https://placehold.co/1920x1080/E0F2F7/000000?text=Genomic+Research+Background")' }} // Placeholder background image
+        <div
+            className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800"
+            style={{
+                background: 'linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%)' // Subtle gradient background
+            }}
         >
-            {/* Overlay for readability */}
-            <div className="absolute inset-0 bg-gray-900 opacity-70"></div> 
-
-            <div className="relative bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl transform transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl border border-gray-200 z-10">
+            <div className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl
+                            transform transition-all duration-300 hover:scale-[1.01] hover:shadow-3xl
+                            border border-gray-200 z-10">
                 <div className="flex flex-col items-center mb-6">
-                    {/* No Logo */}
-                    <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-2">
+                    {/* No Logo - Title is prominent */}
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
                         Pathogenic Variant Generator
                     </h1>
-                    <p className="text-gray-600 text-center text-lg">
-                        Empowering Genomic Research
+                    <p className="text-gray-600 text-center text-lg md:text-xl">
+                        Explore and generate pathogenic protein variants.
                     </p>
                 </div>
                 
-                <p className="text-gray-700 text-center mb-8 text-md leading-relaxed">
+                <p className="text-gray-700 text-center mb-8 text-base leading-relaxed">
                     Upload your canonical FASTA sequence file to identify and generate the sequences of their pathogenic variants.
                     Our tool streamlines the process, providing accurate results for your research.
                 </p>
 
-                <div className="mb-6 border-t border-b border-gray-200 py-6 px-4 rounded-lg bg-gray-50">
-                    <label htmlFor="fasta-upload" className="block text-gray-700 text-lg font-semibold mb-3">
+                <div className="mb-6 border-t border-b border-gray-200 py-6 px-4 rounded-lg bg-gray-50 shadow-inner">
+                    <label htmlFor="fasta-upload" className="block text-gray-800 text-lg font-semibold mb-3">
                         1. Upload your FASTA file (.fasta, .txt)
                     </label>
                     <input
@@ -316,10 +317,10 @@ function App() {
                         id="fasta-upload"
                         accept=".fasta,.txt"
                         onChange={handleFileUpload}
-                        className="block w-full text-md text-gray-700
+                        className="block w-full text-base text-gray-700
                                 file:mr-4 file:py-2.5 file:px-5
                                 file:rounded-full file:border-0
-                                file:text-md file:font-semibold
+                                file:text-base file:font-semibold
                                 file:bg-blue-100 file:text-blue-700
                                 hover:file:bg-blue-200 cursor-pointer rounded-lg border border-gray-300 p-2.5 transition-colors duration-200"
                     />
@@ -352,10 +353,10 @@ function App() {
                         )}
                     </button>
                     {statusMessage && !isLoading && (
-                        <p className="mt-4 text-blue-700 font-medium text-lg">{statusMessage}</p>
+                        <p className="mt-4 text-blue-700 font-medium text-base">{statusMessage}</p>
                     )}
                     {error && (
-                        <p className="mt-4 text-red-600 font-medium text-lg bg-red-50 p-3 rounded-lg border border-red-200">{error}</p>
+                        <p className="mt-4 text-red-600 font-medium text-base bg-red-50 p-3 rounded-lg border border-red-200">{error}</p>
                     )}
                 </div>
 
@@ -378,22 +379,11 @@ function App() {
                     </div>
                 )}
             </div>
-            <p className="mt-8 text-gray-300 text-sm text-center max-w-xl leading-relaxed z-10">
+            <p className="mt-8 text-gray-500 text-xs text-center max-w-xl leading-relaxed z-10">
                 Note: This version attempts to make direct calls to the UniProt API. If you experience errors, it might be due to CORS restrictions in your environment. For production environments, consider a backend proxy.
             </p>
         </div>
     );
 }
-
-// Moved lstrip to a standalone utility function
-// if (!String.prototype.lstrip) {
-//     String.prototype.lstrip = function(chars) {
-//         if (!chars) {
-//             return this.trimLeft();
-//         }
-//         let pattern = new RegExp('^[' + chars + ']+');
-//         return str.replace(pattern, '');
-//     };
-// }
 
 export default App;
