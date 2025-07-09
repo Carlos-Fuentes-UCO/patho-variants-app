@@ -419,6 +419,11 @@ function App() {
                                 Pathogenic/Likely Pathogenic Variants Only
                             </label>
                         </div>
+                        {/* Explanation for Pathogenic/Likely Pathogenic Variants Only */}
+                        <p className="ml-8 text-sm text-gray-500 -mt-2">
+                            Includes only variants explicitly classified as "Pathogenic" or "Likely pathogenic" by UniProt, based on clinical significance.
+                        </p>
+
                         <div className="flex items-center">
                             <input
                                 type="radio"
@@ -433,6 +438,11 @@ function App() {
                                 All Variants with Descriptions (if available)
                             </label>
                         </div>
+                        {/* Explanation for All Variants with Descriptions */}
+                        <p className="ml-8 text-sm text-gray-500 -mt-2">
+                            Includes all variants (both "VARIANT" and "Natural variant" types) that have a descriptive text provided by UniProt, regardless of their clinical significance.
+                        </p>
+
                         <div className="flex items-center">
                             <input
                                 type="radio"
@@ -447,6 +457,10 @@ function App() {
                                 All Variants (regardless of description or pathogenicity)
                             </label>
                         </div>
+                        {/* Explanation for All Variants */}
+                        <p className="ml-8 text-sm text-gray-500 -mt-2">
+                            Includes every variant feature (both "VARIANT" and "Natural variant" types) returned by UniProt for the protein, without any filtering based on description or clinical significance.
+                        </p>
                     </div>
                 </div>
 
