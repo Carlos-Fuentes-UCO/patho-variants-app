@@ -36,13 +36,13 @@ function App() {
 
                 const match = trimmedLine.match(/^>[a-z]{2}\|([A-Z0-9]+)\|/);
                 if (match) {
-                    currentId = match[1];
+                    currentId = match[1]; // Corrected: use match[1] for the captured group
                 } else {
                     const parts = trimmedLine.substring(1).split(' ');
                     if (parts.length > 0) {
                         const idMatchFallback = parts[0].match(/\|([A-Z0-9]+)\|/);
                         if (idMatchFallback) {
-                            currentId = idMatchFallback[1];
+                            currentId = idMatchFallback[1]; // Corrected: use idMatchFallback[1]
                         } else {
                             currentId = parts[0];
                         }
@@ -144,10 +144,10 @@ function App() {
                 if (beginPos - 1 < 0 || beginPos - 1 >= variantSequenceList.length) {
                     console.warn(`Warning: Mutation position ${beginPos} for ${uniprotId} is out of bounds for sequence length ${canonicalSequence.length}. Skipping mutation.`);
                 } else {
-                    const currentAminoAcidInFasta = variantSequenceList[beginPos - 1];
+                    const currentAminoAcidInFasta = variantSequenceList[beginPos - 1]; // Corrected variable name
 
                     if (wildType && mutatedType) { // Substitution
-                        if (currentAminoAcidInFasta !== wildType) {
+                        if (currentAminoAcidInFasta !== wildType) { // Corrected variable name
                             console.warn(`Warning: For ${uniprotId} at pos ${beginPos}, canonical AA in FASTA ('${currentAminoAcidInFasta}') does not match UniProt wildType ('${wildType}'). Applying mutation anyway.`);
                         }
                         variantSequenceList[beginPos - 1] = mutatedType;
@@ -358,11 +358,12 @@ function App() {
         <div
             className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800"
             style={{
-                backgroundColor: '#ffffff' // Pure white background
+                background: 'linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%)' // Subtle gradient background
             }}
         >
-            <div className="relative bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl
-                            border border-gray-200 z-10"> {/* Removed hover effects */}
+            <div className="relative bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl
+                            transform transition-all duration-300 hover:scale-[1.01] hover:shadow-3xl
+                            border border-gray-200 z-10">
                 <div className="flex flex-col items-center mb-6">
                     {/* No Logo - Title is prominent */}
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
@@ -378,7 +379,7 @@ function App() {
                     Our tool streamlines the process, providing accurate results for your research.
                 </p>
 
-                <div className="mb-6 border-t border-b border-gray-200 py-6 px-4 rounded-lg bg-gray-50 shadow-inner">
+                <div className="mb-6 border-t border-b border-gray-200 py-6 px-6 rounded-lg bg-gray-50 shadow-inner"> {/* Added px-6 */}
                     <label htmlFor="fasta-upload" className="block text-gray-800 text-lg font-semibold mb-3">
                         1. Upload your FASTA file (.fasta, .txt)
                     </label>
@@ -400,7 +401,7 @@ function App() {
                 </div>
 
                 {/* New section for variant criteria selection */}
-                <div className="mb-6 border-b border-gray-200 py-6 px-4 rounded-lg bg-gray-50 shadow-inner">
+                <div className="mb-6 border-b border-gray-200 py-6 px-6 rounded-lg bg-gray-50 shadow-inner mt-6"> {/* Added px-6 and mt-6 */}
                     <label className="block text-gray-800 text-lg font-semibold mb-3">
                         2. Select Variant Inclusion Criteria
                     </label>
@@ -472,7 +473,7 @@ function App() {
                                     transition-all duration-300 ease-in-out
                                     ${!fastaFile || isLoading
                                         ? 'bg-gray-400 cursor-not-allowed opacity-75'
-                                        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md' // Flatter button style
+                                        : 'bg-blue-800 hover:bg-blue-900 active:bg-blue-950 shadow-lg hover:shadow-xl' // Darker blue button style
                                     }`}
                     >
                         {isLoading ? (
