@@ -16,6 +16,7 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [resultFasta, setResultFasta] = useState('');
     const [error, setError] = useState('');
+    const [variantCriteria, setVariantCriteria] = useState('pathogenicOnly'); // New state for variant selection
 
     // Function to extract UniProt IDs and sequences from a FASTA file
     const getSequencesAndIdsFromFasta = useCallback((fastaContent) => {
@@ -66,98 +67,150 @@ function App() {
     }, []);
 
     // Function to process a protein and its variants
-    const processProteinVariants = useCallback((uniprotId, canonicalSequence, canonicalHeaderLine, variantsData) => {
+    const processProteinVariants = useCallback((uniprotId, canonicalSequence, canonicalHeaderLine, variantsData, currentVariantCriteria) => {
         const pathogenicVariantSequences = [];
         if (!variantsData || !variantsData.features) {
             return [];
         }
 
         for (const feature of variantsData.features) {
-            if (feature.type === "VARIANT") {
+            // Condition to include the variant based on selected criteria
+            let includeFeature = false;
+            let isPathogenic = false; // Determine pathogenicity regardless of inclusion criteria for description/ftId
+
+            if (feature.clinicalSignificances) {
+                for (const cs of feature.clinicalSignificances) {
+                    if (cs.type === "Pathogenic" || cs.type === "Likely pathogenic") {
+                        isPathogenic = true;
+                        break;
+                    }
+                }
+            }
+
+            if (currentVariantCriteria === 'pathogenicOnly') {
+                if ((feature.type === "VARIANT" || feature.type === "Natural variant") && isPathogenic) {
+                    includeFeature = true;
+                }
+            } else if (currentVariantCriteria === 'allWithDescription') {
+                // Include if it's a VARIANT or Natural variant AND has a description
+                if ((feature.type === "VARIANT" || feature.type === "Natural variant") && feature.description) {
+                    includeFeature = true;
+                    // --- DEBUG LOG ---
+                    console.log(`[DEBUG] Included variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Description: "${feature.description}"`);
+                    // --- END DEBUG LOG ---
+                } else {
+                    // --- DEBUG LOG ---
+                    console.log(`[DEBUG] Skipped variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Has Description: ${!!feature.description}`);
+                    // --- END DEBUG LOG ---
+                }
+            } else if (currentVariantCriteria === 'allVariants') {
+                // Include all 'VARIANT' or 'Natural variant' features
+                if (feature.type === "VARIANT" || feature.type === "Natural variant") {
+                    includeFeature = true;
+                    // --- DEBUG LOG ---
+                    console.log(`[DEBUG] Included variant for 'All Variants': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Has Description: ${!!feature.description}`);
+                    // --- END DEBUG LOG ---
+                }
+            }
+
+            if (includeFeature) {
                 const beginPos = parseInt(feature.begin);
                 const endPos = parseInt(feature.end);
-                const wildTypeAa = feature.wildType;
-                const mutatedTypeAa = feature.mutatedType;
+                
+                // Be more robust with wildType/mutatedType, falling back to alternativeSequence if direct fields are missing
+                let wildType = feature.wildType || (feature.alternativeSequence && feature.alternativeSequence.originalSequence);
+                let mutatedType = feature.mutatedType || (feature.alternativeSequence && feature.alternativeSequence.alternativeSequences && feature.alternativeSequence.alternativeSequences[0]);
 
                 let mutationDescription = "";
-                if (wildTypeAa && mutatedTypeAa) {
-                    mutationDescription = `p.${wildTypeAa}${beginPos}${mutatedTypeAa}`;
-                } else if (wildTypeAa && !mutatedTypeAa && beginPos === endPos) {
-                    mutationDescription = `p.del${wildTypeAa}${beginPos}`;
-                } else if (!wildTypeAa && mutatedTypeAa) { // Insertion
-                    mutationDescription = `p.ins{mutatedTypeAa}${beginPos}`;
-                } else if (wildTypeAa && !mutatedTypeAa && beginPos !== endPos) {
-                    mutationDescription = `p.del${wildTypeAa}${beginPos}-${endPos}`;
+                if (wildType && mutatedType) {
+                    mutationDescription = `p.${wildType}${beginPos}${mutatedType}`;
+                } else if (wildType && !mutatedType && beginPos === endPos) {
+                    mutationDescription = `p.del${wildType}${beginPos}`;
+                } else if (wildType && !mutatedType && beginPos !== endPos) {
+                    mutationDescription = `p.del${wildType}${beginPos}-${endPos}`;
+                } else if (!wildType && mutatedType) { // Insertion
+                    mutationDescription = `p.ins${mutatedType}${beginPos}`;
                 }
-
-                if (feature.description) {
-                    mutationDescription += ` (${feature.description})`;
-                } else if (!mutationDescription) {
+                // Default mutation description if no specific type matches
+                if (!mutationDescription) {
                     mutationDescription = `Variant at pos ${beginPos}`;
                 }
 
-                let isPathogenic = false;
-                if (feature.clinicalSignificances) {
-                    for (const cs of feature.clinicalSignificances) {
-                        if (cs.type === "Pathogenic" || cs.type === "Likely pathogenic") {
-                            isPathogenic = true;
-                            break;
+                let modifiedSequence = ''; 
+                let variantSequenceList = Array.from(canonicalSequence);
+                let mutationAppliedSuccessfully = false;
+
+                // --- MODIFIED MUTATION APPLICATION LOGIC ---
+                if (beginPos - 1 < 0 || beginPos - 1 >= variantSequenceList.length) {
+                    console.warn(`Warning: Mutation position ${beginPos} for ${uniprotId} is out of bounds for sequence length ${canonicalSequence.length}. Skipping mutation.`);
+                } else {
+                    const currentAminoAcidInFasta = variantSequenceList[beginPos - 1];
+
+                    if (wildType && mutatedType) { // Substitution
+                        if (currentAminoAcidInFasta !== wildType) {
+                            console.warn(`Warning: For ${uniprotId} at pos ${beginPos}, canonical AA in FASTA ('${currentAminoAcidInFasta}') does not match UniProt wildType ('${wildType}'). Applying mutation anyway.`);
+                        }
+                        variantSequenceList[beginPos - 1] = mutatedType;
+                        mutationAppliedSuccessfully = true;
+                    } else if (wildType && !mutatedType) { // Deletion
+                        if (endPos <= variantSequenceList.length && beginPos <= endPos) {
+                            const expectedDeletedInFasta = canonicalSequence.substring(beginPos - 1, endPos);
+                            if (expectedDeletedInFasta !== wildType) {
+                                console.warn(`Warning: For ${uniprotId} at pos ${beginPos}-${endPos}, canonical sequence in FASTA ('${expectedDeletedInFasta}') does not match UniProt wildType ('${wildType}'). Applying deletion anyway.`);
+                            }
+                            variantSequenceList.splice(beginPos - 1, endPos - (beginPos - 1));
+                            mutationAppliedSuccessfully = true;
+                        } else {
+                            console.warn(`Warning: Deletion position ${beginPos}-${endPos} for ${uniprotId} is out of bounds or invalid. Skipping mutation.`);
+                        }
+                    } else if (!wildType && mutatedType) { // Insertion
+                        if (beginPos - 1 <= variantSequenceList.length) {
+                            variantSequenceList.splice(beginPos - 1, 0, mutatedType);
+                            mutationAppliedSuccessfully = true;
+                        } else {
+                            console.warn(`Warning: Insertion position ${beginPos} for ${uniprotId} is out of bounds. Skipping mutation.`);
                         }
                     }
                 }
+                // --- END MODIFIED MUTATION APPLICATION LOGIC ---
 
-                // Declare modifiedSequence here, outside the isPathogenic block
-                // This ensures it's always declared for each feature iteration.
-                let modifiedSequence = ''; 
-
-                if (isPathogenic) {
-                    let variantSequenceList = Array.from(canonicalSequence);
+                if (mutationAppliedSuccessfully) {
+                    modifiedSequence = variantSequenceList.join('');
                     
-                    // Apply the mutation
-                    let mutationAppliedSuccessfully = false;
+                    const genomicLocInfo = feature.genomicLocation || [''];
+                    const firstGenomicLoc = genomicLocInfo[0] || '';
 
-                    if (beginPos - 1 < 0 || beginPos - 1 >= variantSequenceList.length) {
-                        // Position out of bounds, mutation not applied
-                    } else if (wildTypeAa && mutatedTypeAa) { // Substitution
-                        if (variantSequenceList[beginPos - 1] === wildTypeAa) {
-                            variantSequenceList[beginPos - 1] = mutatedTypeAa;
-                            mutationAppliedSuccessfully = true;
-                        }
-                    } else if (wildTypeAa && !mutatedTypeAa) { // Deletion
-                        if (endPos <= variantSequenceList.length && beginPos <= endPos) {
-                            const expectedDeleted = canonicalSequence.substring(beginPos - 1, endPos);
-                            if (expectedDeleted === wildTypeAa) {
-                                variantSequenceList.splice(beginPos - 1, endPos - (beginPos - 1));
-                                mutationAppliedSuccessfully = true;
-                            }
-                        }
-                    } else if (!wildTypeAa && mutatedTypeAa) { // Insertion
-                        if (beginPos - 1 <= variantSequenceList.length) {
-                            variantSequenceList.splice(beginPos - 1, 0, mutatedTypeAa);
-                            mutationAppliedSuccessfully = true;
-                        }
+                    // Use lstripString to remove the leading '>'
+                    const cleanedOriginalHeader = lstripString(canonicalHeaderLine.trim(), '>');
+                    let modifiedCanonicalHeaderPart = cleanedOriginalHeader;
+
+                    // Find the second '|' to insert ftId (e.g., after P06396 in ">sp|P06396|GELS_HUMAN...")
+                    const firstPipeIndex = cleanedOriginalHeader.indexOf('|');
+                    const secondPipeIndex = cleanedOriginalHeader.indexOf('|', firstPipeIndex + 1);
+
+                    if (secondPipeIndex !== -1 && feature.ftId) {
+                        // Reconstruct the header with ftId
+                        modifiedCanonicalHeaderPart = 
+                            cleanedOriginalHeader.substring(0, secondPipeIndex) +
+                            '-' + feature.ftId +
+                            cleanedOriginalHeader.substring(secondPipeIndex);
                     }
 
-                    if (mutationAppliedSuccessfully) {
-                        modifiedSequence = variantSequenceList.join(''); // Assign only if mutation was applied
-                        
-                        const genomicLocInfo = feature.genomicLocation || [''];
-                        const firstGenomicLoc = genomicLocInfo[0] || '';
+                    // Add feature.description if it exists
+                    const featureDescriptionPart = feature.description ? ` | ${feature.description}` : '';
 
-                        // Use the standalone lstripString function
-                        const cleanedCanonicalHeader = lstripString(canonicalHeaderLine.trim(), '>');
-                        const fastaHeader = (
-                            `>${cleanedCanonicalHeader} ` +
-                            `| PATHOGENIC_VARIANT:${mutationDescription} ` +
-                            `| Genomic:${firstGenomicLoc}`
-                        );
-                        pathogenicVariantSequences.push(`${fastaHeader}\n${modifiedSequence}`);
-                    }
+                    const fastaHeader = (
+                        `>${modifiedCanonicalHeaderPart} ` +
+                        `| PATHOGENIC_VARIANT:${mutationDescription}` +
+                        featureDescriptionPart +
+                        ` | Genomic:${firstGenomicLoc}`
+                    );
+                    pathogenicVariantSequences.push(`${fastaHeader}\n${modifiedSequence}`);
                 }
             }
         }
         return pathogenicVariantSequences;
-    }, []);
+    }, []); // Removed currentVariantCriteria from dependencies, will pass it directly
 
     // Handle FASTA file upload
     const handleFileUpload = (event) => {
@@ -168,6 +221,11 @@ function App() {
             setError('');
             setStatusMessage('');
         }
+    };
+
+    // Handle variant criteria change
+    const handleCriteriaChange = (event) => {
+        setVariantCriteria(event.target.value);
     };
 
     // Process the FASTA file and generate variants
@@ -234,10 +292,13 @@ function App() {
 
                     if (variantsData && variantsData.features && variantsData.features.length > 0) {
                         setStatusMessage(`Step 3/4: Processing variants for ${uniprotId}...`);
-                        const proteinPathogenicVariants = processProteinVariants(uniprotId, canonicalSeq, canonicalHeader, variantsData);
+                        // Pass current variantCriteria to the processing function
+                        const proteinPathogenicVariants = processProteinVariants(uniprotId, canonicalSeq, canonicalHeader, variantsData, variantCriteria);
                         allPathogenicVariants.push(...proteinPathogenicVariants);
                     } else {
-                        // console.log(`No variants with 'features' found for ${uniprotId}.`);
+                        // --- DEBUG LOG ---
+                        console.log(`[DEBUG] No features found for UniProt ID: ${uniprotId}`);
+                        // --- END DEBUG LOG ---
                     }
                 }
 
@@ -249,11 +310,21 @@ function App() {
                 }).join('\n');
 
                 if (allPathogenicVariants.length === 0) {
-                    setResultFasta("No pathogenic variants were found for any of the proteins in the provided FASTA file.");
+                    let noResultsMessage = "";
+                    if (variantCriteria === 'pathogenicOnly') {
+                        noResultsMessage = "No pathogenic or likely pathogenic variants were found for any of the proteins in the provided FASTA file.";
+                    } else if (variantCriteria === 'allWithDescription') {
+                        noResultsMessage = "No variants with descriptions were found for any of the proteins in the provided FASTA file, based on the selected criteria.";
+                    } else if (variantCriteria === 'allVariants') { // New message for new option
+                        noResultsMessage = "No variants (of type VARIANT or Natural variant) were found for any of the proteins in the provided FASTA file.";
+                    } else {
+                        noResultsMessage = "No variants were found for any of the proteins in the provided FASTA file."; // Fallback, should not happen with current options
+                    }
+                    setResultFasta(noResultsMessage);
                     setStatusMessage("Process completed.");
                 } else {
                     setResultFasta(combinedFastaContent);
-                    setStatusMessage("Process completed! Pathogenic variants FASTA file generated.");
+                    setStatusMessage("Process completed! Variants FASTA file generated."); // Changed to 'Variants'
                 }
                 setIsLoading(false);
             };
@@ -268,7 +339,7 @@ function App() {
             console.error(err);
             setIsLoading(false);
         }
-    }, [fastaFile, getSequencesAndIdsFromFasta, processProteinVariants]);
+    }, [fastaFile, getSequencesAndIdsFromFasta, processProteinVariants, variantCriteria]); // Added variantCriteria to dependencies
 
     // Function to download the resulting FASTA file
     const handleDownload = () => {
@@ -328,6 +399,57 @@ function App() {
                     )}
                 </div>
 
+                {/* New section for variant criteria selection */}
+                <div className="mb-6 border-b border-gray-200 py-6 px-4 rounded-lg bg-gray-50 shadow-inner">
+                    <label className="block text-gray-800 text-lg font-semibold mb-3">
+                        2. Select Variant Inclusion Criteria
+                    </label>
+                    <div className="flex flex-col space-y-3">
+                        <div className="flex items-center">
+                            <input
+                                type="radio"
+                                id="pathogenicOnly"
+                                name="variantCriteria"
+                                value="pathogenicOnly"
+                                checked={variantCriteria === 'pathogenicOnly'}
+                                onChange={handleCriteriaChange}
+                                className="form-radio h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            />
+                            <label htmlFor="pathogenicOnly" className="ml-3 text-gray-700 text-base">
+                                Pathogenic/Likely Pathogenic Variants Only
+                            </label>
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="radio"
+                                id="allWithDescription"
+                                name="variantCriteria"
+                                value="allWithDescription"
+                                checked={variantCriteria === 'allWithDescription'}
+                                onChange={handleCriteriaChange}
+                                className="form-radio h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            />
+                            <label htmlFor="allWithDescription" className="ml-3 text-gray-700 text-base">
+                                All Variants with Descriptions (if available)
+                            </label>
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="radio"
+                                id="allVariants"
+                                name="variantCriteria"
+                                value="allVariants"
+                                checked={variantCriteria === 'allVariants'}
+                                onChange={handleCriteriaChange}
+                                className="form-radio h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            />
+                            <label htmlFor="allVariants" className="ml-3 text-gray-700 text-base">
+                                All Variants (regardless of description or pathogenicity)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="mb-6 text-center">
                     <button
                         onClick={processFastaFile}
@@ -348,7 +470,7 @@ function App() {
                                 {statusMessage || 'Processing...'}
                             </span>
                         ) : (
-                            'Generate Pathogenic Variants'
+                            'Generate Variants' // Changed button text to be more general
                         )}
                     </button>
                     {statusMessage && !isLoading && (
