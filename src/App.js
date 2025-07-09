@@ -365,7 +365,16 @@ function App() {
                             transform transition-all duration-300 hover:scale-[1.01] hover:shadow-3xl
                             border border-gray-200 z-10">
                 <div className="flex flex-col items-center mb-6">
-                    {/* No Logo - Title is prominent */}
+                    {/* Logo SVG */}
+                    <div className="w-24 h-24 mb-4"> {/* Contenedor para el SVG */}
+                        <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="100" height="100" rx="20" fill="#E0E7FF"/>
+                          <text x="50" y="50" font-family="Inter, sans-serif" font-size="38" font-weight="bold" fill="#4F46E5" text-anchor="middle" alignment-baseline="middle">PVG</text>
+                          <path d="M25 65 L50 75 L75 65" stroke="#10B981" stroke-width="4" stroke-linecap="round" fill="none"/>
+                          <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                          <text x="50" y="88" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle" alignment-baseline="middle">GENERATOR</text>
+                        </svg>
+                    </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
                         Pathogenic Variant Generator
                     </h1>
