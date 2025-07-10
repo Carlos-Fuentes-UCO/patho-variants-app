@@ -188,20 +188,29 @@ function App() {
                     const firstPipeIndex = cleanedOriginalHeader.indexOf('|');
                     const secondPipeIndex = cleanedOriginalHeader.indexOf('|', firstPipeIndex + 1);
 
-                    if (secondPipeIndex !== -1 && feature.ftId) {
+                    // --- DEBUG LOG FOR FTID ---
+                    console.log(`[DEBUG] UniProt ID: ${uniprotId}, Variant Type: ${feature.type}, ftId: "${feature.ftId}", secondPipeIndex: ${secondPipeIndex}`);
+                    // --- END DEBUG LOG ---
+
+                    if (secondPipeIndex !== -1 && feature.ftId && typeof feature.ftId === 'string' && feature.ftId.trim() !== '') {
                         // Reconstruct the header with ftId
                         modifiedCanonicalHeaderPart = 
                             cleanedOriginalHeader.substring(0, secondPipeIndex) +
                             '-' + feature.ftId +
                             cleanedOriginalHeader.substring(secondPipeIndex);
+                    } else {
+                        console.log(`[DEBUG] ftId not added for ${uniprotId} variant. ftId was: "${feature.ftId}" or secondPipeIndex was -1.`);
                     }
+
+                    // Determine the appropriate header tag based on pathogenicity
+                    const headerTag = isPathogenic ? 'PATHOGENIC_VARIANT' : 'VARIANT_INFO'; 
 
                     // Add feature.description if it exists
                     const featureDescriptionPart = feature.description ? ` | ${feature.description}` : '';
 
                     const fastaHeader = (
                         `>${modifiedCanonicalHeaderPart} ` +
-                        `| PATHOGENIC_VARIANT:${mutationDescription}` +
+                        `| ${headerTag}:${mutationDescription}` + // Use dynamic headerTag
                         featureDescriptionPart +
                         ` | Genomic:${firstGenomicLoc}`
                     );
