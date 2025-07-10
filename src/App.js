@@ -480,6 +480,23 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     Our tool streamlines the process, providing accurate results for your research.
                 </p>
 
+                {/* New section for Example of Utility */}
+                <div className="mb-6 border-b border-gray-200 py-6 px-6 rounded-lg bg-blue-50 shadow-inner">
+                    <h2 className="text-lg font-semibold text-blue-800 mb-3">Example of Utility</h2>
+                    <p className="text-sm text-blue-700 leading-relaxed">
+                        Imagine you are studying a set of proteins involved in a specific disease, such as **Amyloidosis**. You have their canonical FASTA sequences.
+                        Using this tool, you can upload your FASTA file, select "Pathogenic/Likely Pathogenic Variants Only", and the application will:
+                    </p> {/* Close the previous p tag */}
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-blue-700 leading-relaxed"> {/* Apply text styles to ul itself */}
+                        <li>Automatically query UniProt for each protein.</li>
+                        <li>Identify variants like **TTR p.L48M** or **APOE p.R130C**, which are known to be pathogenic for Amyloidosis or Alzheimer's disease, respectively.</li>
+                        <li>Generate new FASTA entries for these specific variants, allowing you to easily use them for downstream analysis, such as structural modeling, functional studies, **proteomic studies (e.g., mass spectrometry-based proteomics)**, or **integrating into search engines for variant identification**, to understand their impact.</li>
+                    </ul>
+                    <p className="text-sm text-blue-700 leading-relaxed mt-2"> {/* New p tag for the concluding sentence */}
+                        This streamlines the process of obtaining mutated protein sequences that are directly relevant to your research on disease mechanisms.
+                    </p>
+                </div>
+
                 <div className="mb-6 border-t border-b border-gray-200 py-6 px-6 rounded-lg bg-gray-50 shadow-inner"> {/* Added px-6 */}
                     <label htmlFor="fasta-upload" className="block text-gray-800 text-lg font-semibold mb-3">
                         1. Upload your FASTA file (.fasta, .txt)
