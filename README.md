@@ -1,70 +1,62 @@
-# Getting Started with Create React App
+## User Guide: Pathogenic Variant Generator
+Welcome to the Pathogenic Variant Generator! This powerful tool helps you identify and automatically obtain protein variant sequences that are highly relevant for your research, especially those classified as pathogenic or those with detailed descriptions.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## What does this application do?
+Imagine you have a list of proteins (in a FASTA file) and you need to quickly determine if they harbor genetic variants that might be associated with diseases or are otherwise of significant interest. This application streamlines that process by performing the following key functions:
 
-## Available Scripts
+1) Reads your protein file: You simply provide your FASTA file, which contains the "original" or canonical sequences of your proteins.
 
-In the project directory, you can run:
+Automatically searches for variants: The application intelligently connects to a vast protein database (specifically, UniProt) and efficiently searches for all known variants associated with each of your provided proteins.
 
-### `npm start`
+2) Filters for what's important: You have full control! The tool allows you to precisely choose which type of variants you are most interested in:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Pathogenic/Likely Pathogenic Variants Only: This is the strictest and most focused option. It will exclusively include variants that UniProt has explicitly classified as "Pathogenic" or "Likely pathogenic" based on their clinical significance.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+All Variants with Descriptions (if available): This option provides a broader view. It will include any variant that comes with a textual description from UniProt, regardless of its clinical significance. This is incredibly useful for exploring variants with potential functional information.
 
-### `npm test`
+All Variants (regardless of description or pathogenicity): This is the most inclusive option. It will generate sequences for every single variant feature that UniProt has registered for your proteins, without applying any additional filtering based on description or clinical significance.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3) Creates new sequences: For each variant that successfully meets your selected criteria, the application will "modify" the original, canonical sequence of your protein to accurately create the corresponding variant sequence.
 
-### `npm run build`
+Provides you with a new file: Finally, all the identified and generated variant sequences are neatly combined into a single, comprehensive FASTA file. This file is then ready for you to download and seamlessly integrate into other bioinformatics programs or analyses.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## How to use the application?
+Using the Pathogenic Variant Generator is remarkably simple and intuitive. Just follow these straightforward steps:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Step 1: Upload your FASTA file
+Locate the designated area labeled "1. Upload your FASTA file (.fasta, .txt)".
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Click on the "Choose File" (or similar) button to open your file explorer.
 
-### `npm run eject`
+Navigate through your computer's directories and select the FASTA file that contains the protein sequences you wish to analyze.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Important: Please ensure that your file has either a .fasta or .txt extension.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Once selected, the name of your chosen file will be displayed directly below the upload button, confirming your selection.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Step 2: Select variant criteria
+Move to the section titled "2. Select Variant Inclusion Criteria". Here, you will define the specific types of variants you want the application to search for and generate.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Carefully choose one of the following radio button options:
 
-## Learn More
+Pathogenic/Likely Pathogenic Variants Only: Select this if your primary interest lies in variants with confirmed or highly probable clinical significance related to disease.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+All Variants with Descriptions (if available): Choose this to get a wider range of variants, focusing on those for which UniProt provides additional descriptive context.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+All Variants (regardless of description or pathogenicity): Opt for this if you require an exhaustive list of all known variants, without any filtering based on clinical impact or descriptive text.
 
-### Code Splitting
+Step 3: Generate the variants
+Once your file is uploaded and your variant criteria are selected, proceed by clicking the prominent "Generate Variants" button.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The application will then display a "Processing..." message, accompanied by a status bar (e.g., "Step 1/4: Reading FASTA file..."). This indicates the progress of the operation. Please note that the processing time may vary depending on the number of proteins in your input file and the speed of your internet connection, as the application actively queries the UniProt database.
 
-### Analyzing the Bundle Size
+Step 4: Review and download the results
+Upon successful completion of the processing, a new section labeled "Results" will appear.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+If variants were found and generated according to your specified criteria, you will see a large text box containing the entire content of the combined FASTA file of all the new variant sequences.
 
-### Making a Progressive Web App
+To save this valuable data, simply click the "Download Combined FASTA" button. The file will be saved to your computer, ready for immediate use in other bioinformatics tools or for further analysis.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+In the event that no variants are found based on your selected criteria, the application will clearly indicate this with an informative message.
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance.
