@@ -34,17 +34,22 @@ function App() {
                     sequences[currentId] = currentSeqLines.join('');
                 }
 
-                const match = trimmedLine.match(/^>[a-z]{2}\|([A-Z0-9]+)\|/);
+                // MODIFIED REGEX HERE to correctly extract base UniProt ID
+                // This regex captures the main UniProt ID (e.g., P08246) and optionally ignores -VAR_XXXXXX suffixes.
+                const match = trimmedLine.match(/^>[a-z]{2}\|([A-Z0-9_.-]+?)(?:-VAR_[0-9]+)?\|/);
                 if (match) {
-                    currentId = match[1]; // Corrected: use match[1] for the captured group
+                    currentId = match[1]; // This will now correctly be P08246
                 } else {
+                    // Fallback for less standard headers, still try to get the base ID
                     const parts = trimmedLine.substring(1).split(' ');
                     if (parts.length > 0) {
-                        const idMatchFallback = parts[0].match(/\|([A-Z0-9]+)\|/);
-                        if (idMatchFallback) {
-                            currentId = idMatchFallback[1]; // Corrected: use idMatchFallback[1]
+                        let potentialId = parts[0];
+                        // Try to extract the base ID from potentialId if it contains VAR_
+                        const varMatch = potentialId.match(/^([A-Z0-9_.-]+?)(?:-VAR_[0-9]+)?$/);
+                        if (varMatch) {
+                            currentId = varMatch[1];
                         } else {
-                            currentId = parts[0];
+                            currentId = potentialId;
                         }
                     } else {
                         currentId = `UNKNOWN_ID_${Math.random().toString(36).substring(7)}`; // Generate random ID
@@ -54,7 +59,8 @@ function App() {
                 if (currentId && !uniprotIds.includes(currentId)) {
                     uniprotIds.push(currentId);
                 }
-                canonicalHeaders[currentId] = trimmedLine; // Save the complete header line
+                // Store the complete original header line (including VAR_ if present in input)
+                canonicalHeaders[currentId] = trimmedLine; 
                 currentSeqLines = [];
             } else {
                 currentSeqLines.push(trimmedLine);
@@ -93,14 +99,16 @@ function App() {
                 }
             } else if (currentVariantCriteria === 'allWithDescription') {
                 // Include if it's a VARIANT or Natural variant AND has a description
-                if ((feature.type === "VARIANT" || feature.type === "Natural variant") && feature.description) {
+                // Now also check for clinicalSignificances or diseaseAssociations or association
+                if ((feature.type === "VARIANT" || feature.type === "Natural variant") && 
+                    (feature.description || (feature.clinicalSignificances && feature.clinicalSignificances.length > 0) || (feature.diseaseAssociations && feature.diseaseAssociations.length > 0) || (feature.association && feature.association.length > 0))) {
                     includeFeature = true;
                     // --- DEBUG LOG ---
                     console.log(`[DEBUG] Included variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Description: "${feature.description}"`);
                     // --- END DEBUG LOG ---
                 } else {
                     // --- DEBUG LOG ---
-                    console.log(`[DEBUG] Skipped variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Has Description: ${!!feature.description}`);
+                    console.log(`[DEBUG] Skipped variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Has Description: ${!!feature.description}, Has Clinical Significances: ${!!(feature.clinicalSignificances && feature.clinicalSignificances.length > 0)}, Has Disease Associations: ${!!(feature.diseaseAssociations && feature.diseaseAssociations.length > 0)}, Has Association: ${!!(feature.association && feature.association.length > 0)}`);
                     // --- END DEBUG LOG ---
                 }
             } else if (currentVariantCriteria === 'allVariants') {
@@ -212,8 +220,30 @@ function App() {
                     // Determine the appropriate header tag based on pathogenicity
                     const headerTag = isPathogenic ? 'PATHOGENIC_VARIANT' : 'VARIANT_INFO'; 
 
-                    // Add feature.description if it exists
-                    const featureDescriptionPart = feature.description ? ` | ${feature.description}` : '';
+                    // --- MODIFIED LOGIC FOR FEATURE DESCRIPTION PART ---
+                    let featureDescriptionPart = '';
+                    console.log(`[DEBUG] Building description for ${uniprotId} variant at pos ${beginPos}.`);
+                    console.log(`[DEBUG]   feature.diseaseAssociations:`, feature.diseaseAssociations);
+                    console.log(`[DEBUG]   feature.clinicalSignificances:`, feature.clinicalSignificances);
+                    console.log(`[DEBUG]   feature.association:`, feature.association); // New debug log
+                    console.log(`[DEBUG]   feature.description: "${feature.description}"`);
+
+                    if (feature.association && feature.association.length > 0) { // Check feature.association first
+                        featureDescriptionPart = ` | Association:${feature.association.map(a => a.name).join(', ')}`;
+                        console.log(`[DEBUG]   Selected Association: ${featureDescriptionPart}`);
+                    } else if (feature.diseaseAssociations && feature.diseaseAssociations.length > 0) {
+                        featureDescriptionPart = ` | Disease:${feature.diseaseAssociations.map(da => da.diseaseName).join(', ')}`;
+                        console.log(`[DEBUG]   Selected Disease Association: ${featureDescriptionPart}`);
+                    } else if (feature.clinicalSignificances && feature.clinicalSignificances.length > 0) {
+                        featureDescriptionPart = ` | ClinicalSignificance:${feature.clinicalSignificances.map(cs => cs.type).join(', ')}`;
+                        console.log(`[DEBUG]   Selected Clinical Significance: ${featureDescriptionPart}`);
+                    } else if (feature.description) {
+                        featureDescriptionPart = ` | ${feature.description}`;
+                        console.log(`[DEBUG]   Selected General Description: ${featureDescriptionPart}`);
+                    } else {
+                        console.log(`[DEBUG]   No specific description part found.`);
+                    }
+                    // --- END MODIFIED LOGIC ---
 
                     const fastaHeader = (
                         `>${modifiedCanonicalHeaderPart} ` +
