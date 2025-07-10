@@ -615,8 +615,17 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     </div>
                 )}
             </div>
+            {/* Footer con información de afiliación */}
             <p className="mt-8 text-gray-500 text-xs text-center max-w-xl leading-relaxed z-10">
                 Note: This version attempts to make direct calls to the UniProt API. If you experience errors, it might be due to CORS restrictions in your environment. For production environments, consider a backend proxy.
+                <br />
+                <span className="font-semibold text-gray-600 mt-2 block">
+                    Dr. Carlos Fuentes, Proteomics Unit-SCAI, UCO
+                    <br />
+                    Email: <a href="mailto:proteomica2@uco.es" className="text-blue-500 hover:underline">proteomica2@uco.es</a>
+                    <br />
+                    ORCID: <a href="https://orcid.org/0000-0001-9940-9065" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">0000-0001-9940-9065</a>
+                </span>
             </p>
         </div>
     );
