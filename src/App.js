@@ -423,7 +423,10 @@ Using the Pathogenic Variant Generator is remarkably simple and intuitive. Just 
 
 4. In the event that no variants are found based on your selected criteria, the application will clearly indicate this with an informative message.
 
-That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance`;
+That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance
+
+---
+**Acknowledgements:** This application was developed with the assistance of a large language model, Gemini.`;
 
     // Function to download the user guide
     const handleDownloadUserGuide = () => {
