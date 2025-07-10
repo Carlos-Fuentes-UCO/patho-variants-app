@@ -441,6 +441,8 @@ That's it! With these simple steps, you will be able to efficiently use the Path
         URL.revokeObjectURL(url);
     };
 
+    const creationDate = "July 10, 2025"; // Hardcoded creation date
+
     return (
         <div
             className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800"
@@ -635,7 +637,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     </div>
                 )}
             </div>
-            {/* Footer con información de afiliación */}
+            {/* Footer con información de afiliación y fecha de creación */}
             <p className="mt-8 text-gray-500 text-xs text-center max-w-xl leading-relaxed z-10">
                 Note: This version attempts to make direct calls to the UniProt API. If you experience errors, it might be due to CORS restrictions in your environment. For production environments, consider a backend proxy.
                 <br />
@@ -645,6 +647,10 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     Email: <a href="mailto:proteomica2@uco.es" className="text-blue-500 hover:underline">proteomica2@uco.es</a>
                     <br />
                     ORCID: <a href="https://orcid.org/0000-0001-9940-9065" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">0000-0001-9940-9065</a>
+                </span>
+                <br />
+                <span className="text-gray-500 mt-2 block">
+                    Created: {creationDate}
                 </span>
             </p>
         </div>
