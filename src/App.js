@@ -17,6 +17,7 @@ function App() {
     const [resultFasta, setResultFasta] = useState('');
     const [error, setError] = useState('');
     const [variantCriteria, setVariantCriteria] = useState('pathogenicOnly'); // New state for variant selection
+    const [showUtilityExample, setShowUtilityExample] = useState(false); // New state for toggling utility example
 
     // Function to extract UniProt IDs and sequences from a FASTA file
     const getSequencesAndIdsFromFasta = useCallback((fastaContent) => {
@@ -117,7 +118,7 @@ function App() {
                     includeFeature = true;
                     // --- DEBUG LOG ---
                     console.log(`[DEBUG] Included variant for 'All Variants': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Has Description: ${!!feature.description}`);
-                    // --- END DEBUG LOG ---
+                    // --- END DEBUG ---
                 }
             }
 
@@ -344,7 +345,7 @@ function App() {
                     } else {
                         // --- DEBUG LOG ---
                         console.log(`[DEBUG] No features found for UniProt ID: ${uniprotId}`);
-                        // --- END DEBUG LOG ---
+                        // --- END DEBUG ---
                     }
                 }
 
@@ -507,7 +508,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                           <text x="50" y="50" fontFamily="Inter, sans-serif" fontSize="38" fontWeight="bold" fill="#4F46E5" textAnchor="middle" alignmentBaseline="middle">PVG</text>
                           <path d="M25 65 L50 75 L75 65" stroke="#10B981" strokeWidth="4" strokeLinecap="round" fill="none"/>
                           <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                          <text x="50" y="88" fontFamily="Inter, sans-serif" fontSize="12" fill="#6B7280" textAnchor="middle" alignmentBaseline="middle">GENERATOR</text>
+                          <text x="50" y="88" fontFamily="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle" alignment-baseline="middle">GENERATOR</text>
                         </svg>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
@@ -531,21 +532,34 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     Our tool streamlines the process, providing accurate results for your research.
                 </p>
 
-                {/* New section for Example of Utility */}
+                {/* New section for Example of Utility - Now collapsible */}
                 <div className="mb-6 border-b border-gray-200 py-6 px-6 rounded-lg bg-blue-50 shadow-inner">
-                    <h2 className="text-lg font-semibold text-blue-800 mb-3">Example of Utility</h2>
-                    <p className="text-sm text-blue-700 leading-relaxed">
-                        Imagine you are studying a set of proteins involved in a specific disease, such as **Amyloidosis**. You have their canonical FASTA sequences.
-                        Using this tool, you can upload your FASTA file, select "Pathogenic/Likely Pathogenic Variants Only", and the application will:
-                    </p> {/* Close the previous p tag */}
-                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-blue-700 leading-relaxed"> {/* Apply text styles to ul itself */}
-                        <li>Automatically query UniProt for each protein.</li>
-                        <li>Identify variants like **TTR p.L48M** or **APOE p.R130C**, which are known to be pathogenic for Amyloidosis or Alzheimer's disease, respectively.</li>
-                        <li>Generate new FASTA entries for these specific variants, allowing you to easily use them for downstream analysis, such as structural modeling, functional studies, **proteomic studies (e.g., mass spectrometry-based proteomics)**, or **integrating into search engines for variant identification**, to understand their impact.</li>
-                    </ul>
-                    <p className="text-sm text-blue-700 leading-relaxed mt-2"> {/* New p tag for the concluding sentence */}
-                        This streamlines the process of obtaining mutated protein sequences that are directly relevant to your research on disease mechanisms.
-                    </p>
+                    <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowUtilityExample(!showUtilityExample)}>
+                        <h2 className="text-lg font-semibold text-blue-800">Example of Utility</h2>
+                        <button className="text-blue-600 hover:text-blue-800 transition-colors">
+                            {showUtilityExample ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path></svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            )}
+                        </button>
+                    </div>
+                    {showUtilityExample && (
+                        <div className="mt-3">
+                            <p className="text-sm text-blue-700 leading-relaxed">
+                                Imagine you are studying a set of proteins involved in a specific disease, such as **Amyloidosis**. You have their canonical FASTA sequences.
+                                Using this tool, you can upload your FASTA file, select "Pathogenic/Likely Pathogenic Variants Only", and the application will:
+                            </p>
+                            <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-blue-700 leading-relaxed">
+                                <li>Automatically query UniProt for each protein.</li>
+                                <li>Identify variants like **TTR p.L48M** or **APOE p.R130C**, which are known to be pathogenic for Amyloidosis or Alzheimer's disease, respectively.</li>
+                                <li>Generate new FASTA entries for these specific variants, **including pathology annotation in their headers**, allowing you to easily use them for downstream analysis, such as structural modeling, functional studies, **proteomic studies (e.g., mass spectrometry-based proteomics)**, or **integrating into search engines for variant identification**, to understand their impact.</li>
+                            </ul>
+                            <p className="text-sm text-blue-700 leading-relaxed mt-2">
+                                This streamlines the process of obtaining mutated protein sequences that are directly relevant to your research on disease mechanisms.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-6 border-t border-b border-gray-200 py-6 px-6 rounded-lg bg-gray-50 shadow-inner"> {/* Added px-6 */}
