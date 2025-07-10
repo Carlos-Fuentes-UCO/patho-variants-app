@@ -121,6 +121,13 @@ function App() {
                 let wildType = feature.wildType || (feature.alternativeSequence && feature.alternativeSequence.originalSequence);
                 let mutatedType = feature.mutatedType || (feature.alternativeSequence && feature.alternativeSequence.alternativeSequences && feature.alternativeSequence.alternativeSequences[0]);
 
+                // --- NEW LOGIC: Handle '?' in mutatedType by replacing with 'X' ---
+                if (mutatedType === '?') {
+                    console.warn(`[WARNING] Replaced '?' mutatedType with 'X' for variant at position ${beginPos} of ${uniprotId}.`);
+                    mutatedType = 'X';
+                }
+                // --- END NEW LOGIC ---
+
                 let mutationDescription = "";
                 if (wildType && mutatedType) {
                     mutationDescription = `p.${wildType}${beginPos}${mutatedType}`;
