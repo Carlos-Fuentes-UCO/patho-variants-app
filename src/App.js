@@ -354,6 +354,90 @@ function App() {
         URL.revokeObjectURL(url);
     };
 
+    // User Guide content (from the provided Markdown, converted to plain text for download)
+    const userGuideContent = `# User Guide: Pathogenic Variant Generator
+
+Welcome to the Pathogenic Variant Generator! This powerful tool helps you identify and automatically obtain protein variant sequences that are highly relevant for your research, especially those classified as pathogenic or those with detailed descriptions.
+
+## What does this application do?
+
+Imagine you have a list of proteins (in a FASTA file) and you need to quickly determine if they harbor genetic variants that might be associated with diseases or are otherwise of significant interest. This application streamlines that process by performing the following key functions:
+
+1. Reads your protein file: You simply provide your FASTA file, which contains the "original" or canonical sequences of your proteins.
+
+2. Automatically searches for variants: The application intelligently connects to a vast protein database (specifically, UniProt) and efficiently searches for all known variants associated with each of your provided proteins.
+
+3. Filters for what's important: You have full control! The tool allows you to precisely choose which type of variants you are most interested in:
+
+   * Pathogenic/Likely Pathogenic Variants Only: This is the strictest and most focused option. It will exclusively include variants that UniProt has explicitly classified as "Pathogenic" or "Likely pathogenic" based on their clinical significance.
+
+   * All Variants with Descriptions (if available): This option provides a broader view. It will include any variant that comes with a textual description from UniProt, regardless of its clinical significance. This is incredibly useful for exploring variants with potential functional information.
+
+   * All Variants (regardless of description or pathogenicity): This is the most inclusive option. It will generate sequences for every single variant feature that UniProt has registered for your proteins, without applying any additional filtering based on clinical impact or descriptive text.
+
+4. Creates new sequences: For each variant that successfully meets your selected criteria, the application will "modify" the original, canonical sequence of your protein to accurately create the corresponding variant sequence.
+
+5. Provides you with a new file: Finally, all the identified and generated variant sequences are neatly combined into a single, comprehensive FASTA file. This file is then ready for you to download and seamlessly integrate into other bioinformatics programs or analyses.
+
+## How to use the application?
+
+Using the Pathogenic Variant Generator is remarkably simple and intuitive. Just follow these straightforward steps:
+
+### Step 1: Upload your FASTA file
+
+1. Locate the designated area labeled "1. Upload your FASTA file (.fasta, .txt)".
+
+2. Click on the "Choose File" (or similar) button to open your file explorer.
+
+3. Navigate through your computer's directories and select the FASTA file that contains the protein sequences you wish to analyze.
+
+   * Important: Please ensure that your file has either a .fasta or .txt extension.
+
+   * Once selected, the name of your chosen file will be displayed directly below the upload button, confirming your selection.
+
+### Step 2: Select variant criteria
+
+1. Move to the section titled "2. Select Variant Inclusion Criteria". Here, you will define the specific types of variants you want the application to search for and generate.
+
+2. Carefully choose one of the following radio button options:
+
+   * Pathogenic/Likely Pathogenic Variants Only: Select this if your primary interest lies in variants with confirmed or highly probable clinical significance related to disease.
+
+   * All Variants with Descriptions (if available): Choose this to get a wider range of variants, focusing on those for which UniProt provides additional descriptive context.
+
+   * All Variants (regardless of description or pathogenicity): Opt for this if you require an exhaustive list of all known variants, without any filtering based on clinical impact or descriptive text.
+
+### Step 3: Generate the variants
+
+1. Once your file is uploaded and your variant criteria are selected, proceed by clicking the prominent "Generate Variants" button.
+
+2. The application will then display a "Processing..." message, accompanied by a status bar (e.g., "Step 1/4: Reading FASTA file..."). This indicates the progress of the operation. Please note that the processing time may vary depending on the number of proteins in your input file and the speed of your internet connection, as the application actively queries the UniProt database.
+
+### Step 4: Review and download the results
+
+1. Upon successful completion of the processing, a new section labeled "Results" will appear.
+
+2. If variants were found and generated according to your specified criteria, you will see a large text box containing the entire content of the combined FASTA file of all the new variant sequences.
+
+3. To save this valuable data, simply click the "Download Combined FASTA" button. The file will be saved to your computer, ready for immediate use in other bioinformatics tools or for further analysis.
+
+4. In the event that no variants are found based on your selected criteria, the application will clearly indicate this with an informative message.
+
+That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance`;
+
+    // Function to download the user guide
+    const handleDownloadUserGuide = () => {
+        const blob = new Blob([userGuideContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Pathogenic_Variant_Generator_User_Guide.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div
             className="min-h-screen flex flex-col items-center justify-center p-4 font-sans text-gray-800"
@@ -369,10 +453,10 @@ function App() {
                     <div className="w-24 h-24 mb-4"> {/* Contenedor para el SVG */}
                         <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <rect width="100" height="100" rx="20" fill="#E0E7FF"/>
-                          <text x="50" y="50" font-family="Inter, sans-serif" font-size="38" font-weight="bold" fill="#4F46E5" text-anchor="middle" alignment-baseline="middle">PVG</text>
-                          <path d="M25 65 L50 75 L75 65" stroke="#10B981" stroke-width="4" stroke-linecap="round" fill="none"/>
-                          <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                          <text x="50" y="88" font-family="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle" alignment-baseline="middle">GENERATOR</text>
+                          <text x="50" y="50" fontFamily="Inter, sans-serif" fontSize="38" fontWeight="bold" fill="#4F46E5" textAnchor="middle" alignmentBaseline="middle">PVG</text>
+                          <path d="M25 65 L50 75 L75 65" stroke="#10B981" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                          <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                          <text x="50" y="88" fontFamily="Inter, sans-serif" fontSize="12" fill="#6B7280" textAnchor="middle" alignmentBaseline="middle">GENERATOR</text>
                         </svg>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
@@ -381,6 +465,14 @@ function App() {
                     <p className="text-gray-600 text-center text-lg md:text-xl">
                         Explore and generate pathogenic protein variants.
                     </p>
+                    {/* Botón para descargar la guía de usuario */}
+                    <button
+                        onClick={handleDownloadUserGuide}
+                        className="mt-4 py-2 px-4 rounded-xl bg-gray-200 text-gray-700 font-semibold text-sm
+                                    hover:bg-gray-300 active:bg-gray-400 shadow-sm transition-all duration-200"
+                    >
+                        Download User Guide
+                    </button>
                 </div>
                 
                 <p className="text-gray-700 text-center mb-8 text-base leading-relaxed">
