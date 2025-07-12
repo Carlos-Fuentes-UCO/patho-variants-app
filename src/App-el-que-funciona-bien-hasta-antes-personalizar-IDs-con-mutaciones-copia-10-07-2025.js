@@ -18,7 +18,6 @@ function App() {
     const [error, setError] = useState('');
     const [variantCriteria, setVariantCriteria] = useState('pathogenicOnly'); // New state for variant selection
     const [showUtilityExample, setShowUtilityExample] = useState(false); // New state for toggling utility example
-    const [generatedSequenceCount, setGeneratedSequenceCount] = useState(0); // New state for generated sequence count
 
     // Function to extract UniProt IDs and sequences from a FASTA file
     const getSequencesAndIdsFromFasta = useCallback((fastaContent) => {
@@ -36,8 +35,8 @@ function App() {
                     sequences[currentId] = currentSeqLines.join('');
                 }
 
-                // Regex to correctly extract base UniProt ID (e.g., P08246)
-                // This regex captures the main UniProt ID and optionally ignores -VAR_XXXXXX suffixes.
+                // MODIFIED REGEX HERE to correctly extract base UniProt ID
+                // This regex captures the main UniProt ID (e.g., P08246) and optionally ignores -VAR_XXXXXX suffixes.
                 const match = trimmedLine.match(/^>[a-z]{2}\|([A-Z0-9_.-]+?)(?:-VAR_[0-9]+)?\|/);
                 if (match) {
                     currentId = match[1]; // This will now correctly be P08246
@@ -103,7 +102,7 @@ function App() {
                 // Include if it's a VARIANT or Natural variant AND has a description
                 // Now also check for clinicalSignificances or diseaseAssociations or association
                 if ((feature.type === "VARIANT" || feature.type === "Natural variant") && 
-                   (feature.description || (feature.clinicalSignificances && feature.clinicalSignificances.length > 0) || (feature.diseaseAssociations && feature.diseaseAssociations.length > 0) || (feature.association && feature.association.length > 0))) {
+                    (feature.description || (feature.clinicalSignificances && feature.clinicalSignificances.length > 0) || (feature.diseaseAssociations && feature.diseaseAssociations.length > 0) || (feature.association && feature.association.length > 0))) {
                     includeFeature = true;
                     // --- DEBUG LOG ---
                     console.log(`[DEBUG] Included variant for 'All Variants with Descriptions': UniProt ID: ${uniprotId}, Feature Type: ${feature.type}, Description: "${feature.description}"`);
@@ -199,33 +198,24 @@ function App() {
 
                     // Use lstripString to remove the leading '>'
                     const cleanedOriginalHeader = lstripString(canonicalHeaderLine.trim(), '>');
-                    const headerParts = cleanedOriginalHeader.split('|', 3); // Split into at most 3 parts: sp, ID, rest
+                    let modifiedCanonicalHeaderPart = cleanedOriginalHeader;
 
-                    let finalAccessionPart = uniprotId; // Default to base UniProt ID
-                    let modifiedCanonicalHeaderPart; // Declare here
+                    // Find the second '|' to insert ftId (e.g., after P06396 in ">sp|P06396|GELS_HUMAN...")
+                    const firstPipeIndex = cleanedOriginalHeader.indexOf('|');
+                    const secondPipeIndex = cleanedOriginalHeader.indexOf('|', firstPipeIndex + 1);
 
-                    if (headerParts.length >= 2) {
-                        const originalAccessionInHeader = headerParts[1]; // e.g., P08246 or P08246-VAR_000100
+                    // --- DEBUG LOG FOR FTID ---
+                    console.log(`[DEBUG] UniProt ID: ${uniprotId}, Variant Type: ${feature.type}, ftId: "${feature.ftId}", secondPipeIndex: ${secondPipeIndex}`);
+                    // --- END DEBUG LOG ---
 
-                        // Check if the original accession already contains "-VAR_"
-                        if (!originalAccessionInHeader.includes('-VAR_')) {
-                            // If it doesn't have -VAR_, append the mutation description (without "p.")
-                            finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}`;
-                        } else {
-                            // If it already has -VAR_, keep it as is
-                            finalAccessionPart = originalAccessionInHeader;
-                        }
-
-                        // Reconstruct the modified header part with the new ID
-                        headerParts[1] = finalAccessionPart;
-                        modifiedCanonicalHeaderPart = headerParts.join('|'); // Corrected join syntax
+                    if (secondPipeIndex !== -1 && feature.ftId && typeof feature.ftId === 'string' && feature.ftId.trim() !== '') {
+                        // Reconstruct the header with ftId
+                        modifiedCanonicalHeaderPart = 
+                            cleanedOriginalHeader.substring(0, secondPipeIndex) +
+                            '-' + feature.ftId +
+                            cleanedOriginalHeader.substring(secondPipeIndex);
                     } else {
-                        // Fallback for very simple header formats (e.g., just ">ID")
-                        // In this case, always add the mutation to ensure uniqueness
-                        modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}`;
-                        if (headerParts.length > 0) {
-                            modifiedCanonicalHeaderPart = `${headerParts[0]}|${modifiedCanonicalHeaderPart}`;
-                        }
+                        console.log(`[DEBUG] ftId not added for ${uniprotId} variant. ftId was: "${feature.ftId}" or secondPipeIndex was -1.`);
                     }
 
                     // Determine the appropriate header tag based on pathogenicity
@@ -257,8 +247,8 @@ function App() {
                     // --- END MODIFIED LOGIC ---
 
                     const fastaHeader = (
-                        `>${modifiedCanonicalHeaderPart}` + // Use dynamic headerTag
-                        ` | ${headerTag}:${mutationDescription}` + // Keep this part
+                        `>${modifiedCanonicalHeaderPart} ` +
+                        `| ${headerTag}:${mutationDescription}` + // Use dynamic headerTag
                         featureDescriptionPart +
                         ` | Genomic:${firstGenomicLoc}`
                     );
@@ -277,7 +267,6 @@ function App() {
             setResultFasta('');
             setError('');
             setStatusMessage('');
-            setGeneratedSequenceCount(0); // Reset count on new file upload
         }
     };
 
@@ -297,7 +286,6 @@ function App() {
         setStatusMessage("Step 1/4: Reading FASTA file...");
         setError('');
         setResultFasta('');
-        setGeneratedSequenceCount(0); // Reset count at the start of processing
 
         try {
             const reader = new FileReader();
@@ -367,8 +355,6 @@ function App() {
                     const cleanedSequence = sequence.replace(/\*/g, ''); // Remove asterisks
                     return `${header}\n${cleanedSequence}`;
                 }).join('\n');
-
-                setGeneratedSequenceCount(allPathogenicVariants.length); // Set the count here
 
                 if (allPathogenicVariants.length === 0) {
                     let noResultsMessage = "";
@@ -484,7 +470,10 @@ Using the Pathogenic Variant Generator is remarkably simple and intuitive. Just 
 
 4. In the event that no variants are found based on your selected criteria, the application will clearly indicate this with an informative message.
 
-That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance`;
+That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance
+
+---
+**Acknowledgements:** This application was developed with the assistance of a large language model, Gemini.`;
 
     // Function to download the user guide
     const handleDownloadUserGuide = () => {
@@ -513,13 +502,13 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                             border border-gray-200 z-10">
                 <div className="flex flex-col items-center mb-6">
                     {/* Logo SVG */}
-                    <div className="w-24 h-24 mb-4"> {/* Container for the SVG */}
+                    <div className="w-24 h-24 mb-4"> {/* Contenedor para el SVG */}
                         <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <rect width="100" height="100" rx="20" fill="#E0E7FF"/>
                           <text x="50" y="50" fontFamily="Inter, sans-serif" fontSize="38" fontWeight="bold" fill="#4F46E5" textAnchor="middle" alignmentBaseline="middle">PVG</text>
                           <path d="M25 65 L50 75 L75 65" stroke="#10B981" strokeWidth="4" strokeLinecap="round" fill="none"/>
                           <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                          <text x="50" y="88" fontFamily="Inter, sans-serif" fontSize="12" fill="#6B7280" textAnchor="middle" alignmentBaseline="middle">GENERATOR</text>
+                          <text x="50" y="88" fontFamily="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle" alignment-baseline="middle">GENERATOR</text>
                         </svg>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
@@ -528,7 +517,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     <p className="text-gray-600 text-center text-lg md:text-xl">
                         Explore and generate pathogenic protein variants.
                     </p>
-                    {/* Button to download user guide */}
+                    {/* Botón para descargar la guía de usuario */}
                     <button
                         onClick={handleDownloadUserGuide}
                         className="mt-4 py-2 px-4 rounded-xl bg-gray-200 text-gray-700 font-semibold text-sm
@@ -693,10 +682,6 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                 {resultFasta && (
                     <div className="mt-8 pt-6 border-t border-gray-200">
                         <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Results</h2>
-                        {/* Always display the generated sequence count */}
-                        <p className="text-center text-lg font-semibold text-gray-700 mb-4">
-                            Generated Sequences: <span className="text-blue-600">{generatedSequenceCount}</span>
-                        </p>
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 max-h-60 overflow-y-auto shadow-inner">
                             <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">{resultFasta}</pre>
                         </div>
@@ -712,7 +697,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                     </div>
                 )}
             </div>
-            {/* Footer with affiliation information and creation date */}
+            {/* Footer con información de afiliación y fecha de creación */}
             <p className="mt-8 text-gray-500 text-xs text-center max-w-xl leading-relaxed z-10">
                 Note: This version attempts to make direct calls to the UniProt API. If you experience errors, it might be due to CORS restrictions in your environment. For production environments, consider a backend proxy.
                 <br />
@@ -725,8 +710,6 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                 </span>
                 <br />
                 <span className="text-gray-500 mt-2 block">
-                    Developed with the assistance of Gemini, a large language model by Google.
-                    <br />
                     Created: {creationDate}
                 </span>
             </p>

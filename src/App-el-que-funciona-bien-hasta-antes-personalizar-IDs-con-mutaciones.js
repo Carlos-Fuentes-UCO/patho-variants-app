@@ -693,10 +693,11 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                 {resultFasta && (
                     <div className="mt-8 pt-6 border-t border-gray-200">
                         <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Results</h2>
-                        {/* Always display the generated sequence count */}
-                        <p className="text-center text-lg font-semibold text-gray-700 mb-4">
-                            Generated Sequences: <span className="text-blue-600">{generatedSequenceCount}</span>
-                        </p>
+                        {generatedSequenceCount > 0 && (
+                            <p className="text-center text-lg font-semibold text-gray-700 mb-4">
+                                Generated Sequences: <span className="text-blue-600">{generatedSequenceCount}</span>
+                            </p>
+                        )}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 max-h-60 overflow-y-auto shadow-inner">
                             <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">{resultFasta}</pre>
                         </div>
