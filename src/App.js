@@ -198,24 +198,33 @@ function App() {
 
                     // Use lstripString to remove the leading '>'
                     const cleanedOriginalHeader = lstripString(canonicalHeaderLine.trim(), '>');
-                    let modifiedCanonicalHeaderPart = cleanedOriginalHeader;
+                    const headerParts = cleanedOriginalHeader.split('|', 3); // Split into at most 3 parts: sp, ID, rest
 
-                    // Find the second '|' to insert ftId (e.g., after P06396 in ">sp|P06396|GELS_HUMAN...")
-                    const firstPipeIndex = cleanedOriginalHeader.indexOf('|');
-                    const secondPipeIndex = cleanedOriginalHeader.indexOf('|', firstPipeIndex + 1);
+                    let finalAccessionPart = uniprotId; // Default to base UniProt ID
+                    let modifiedCanonicalHeaderPart; // Declare here
 
-                    // --- DEBUG LOG FOR FTID ---
-                    console.log(`[DEBUG] UniProt ID: ${uniprotId}, Variant Type: ${feature.type}, ftId: "${feature.ftId}", secondPipeIndex: ${secondPipeIndex}`);
-                    // --- END DEBUG LOG ---
+                    if (headerParts.length >= 2) {
+                        const originalAccessionInHeader = headerParts[1]; // e.g., P08246 or P08246-VAR_000100
 
-                    if (secondPipeIndex !== -1 && feature.ftId && typeof feature.ftId === 'string' && feature.ftId.trim() !== '') {
-                        // Reconstruct the header with ftId
-                        modifiedCanonicalHeaderPart = 
-                            cleanedOriginalHeader.substring(0, secondPipeIndex) +
-                            '-' + feature.ftId +
-                            cleanedOriginalHeader.substring(secondPipeIndex);
+                        // Check if the original accession already contains "-VAR_"
+                        if (!originalAccessionInHeader.includes('-VAR_')) {
+                            // If it doesn't have -VAR_, append the mutation description (without "p.")
+                            finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}`;
+                        } else {
+                            // If it already has -VAR_, keep it as is
+                            finalAccessionPart = originalAccessionInHeader;
+                        }
+
+                        // Reconstruct the modified header part with the new ID
+                        headerParts[1] = finalAccessionPart;
+                        modifiedCanonicalHeaderPart = headerParts.join('|'); // Corrected join syntax
                     } else {
-                        console.log(`[DEBUG] ftId not added for ${uniprotId} variant. ftId was: "${feature.ftId}" or secondPipeIndex was -1.`);
+                        // Fallback for very simple header formats (e.g., just ">ID")
+                        // In this case, always add the mutation to ensure uniqueness
+                        modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}`;
+                        if (headerParts.length > 0) {
+                            modifiedCanonicalHeaderPart = `${headerParts[0]}|${modifiedCanonicalHeaderPart}`;
+                        }
                     }
 
                     // Determine the appropriate header tag based on pathogenicity
@@ -247,8 +256,8 @@ function App() {
                     // --- END MODIFIED LOGIC ---
 
                     const fastaHeader = (
-                        `>${modifiedCanonicalHeaderPart} ` +
-                        `| ${headerTag}:${mutationDescription}` + // Use dynamic headerTag
+                        `>${modifiedCanonicalHeaderPart}` + // Use dynamic headerTag
+                        ` | ${headerTag}:${mutationDescription}` + // Keep this part
                         featureDescriptionPart +
                         ` | Genomic:${firstGenomicLoc}`
                     );
@@ -408,7 +417,8 @@ Welcome to the Pathogenic Variant Generator! This powerful tool helps you identi
 
 ## What does this application do?
 
-Imagine you have a list of proteins (in a FASTA file) and you need to quickly determine if they harbor genetic variants that might be associated with diseases or are otherwise of significant interest. This application streamlines that process by performing the following key functions:
+Imagine you are studying a set of proteins involved in a specific disease, such as **Amyloidosis**. You have their canonical FASTA sequences.
+This application streamlines that process by performing the following key functions:
 
 1. Reads your protein file: You simply provide your FASTA file, which contains the "original" or canonical sequences of your proteins.
 
@@ -470,10 +480,7 @@ Using the Pathogenic Variant Generator is remarkably simple and intuitive. Just 
 
 4. In the event that no variants are found based on your selected criteria, the application will clearly indicate this with an informative message.
 
-That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance
-
----
-**Acknowledgements:** This application was developed with the assistance of a large language model, Gemini.`;
+That's it! With these simple steps, you will be able to efficiently use the Pathogenic Variant Generator for your research. Should you have any questions or encounter any problems during its use, please feel free to consult the technical documentation or reach out for assistance`;
 
     // Function to download the user guide
     const handleDownloadUserGuide = () => {
@@ -508,7 +515,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                           <text x="50" y="50" fontFamily="Inter, sans-serif" fontSize="38" fontWeight="bold" fill="#4F46E5" textAnchor="middle" alignmentBaseline="middle">PVG</text>
                           <path d="M25 65 L50 75 L75 65" stroke="#10B981" strokeWidth="4" strokeLinecap="round" fill="none"/>
                           <path d="M75 65 L70 60 M75 65 L70 70" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                          <text x="50" y="88" fontFamily="Inter, sans-serif" font-size="12" fill="#6B7280" text-anchor="middle" alignment-baseline="middle">GENERATOR</text>
+                          <text x="50" y="88" fontFamily="Inter, sans-serif" fontSize="12" fill="#6B7280" textAnchor="middle" alignmentBaseline="middle">GENERATOR</text>
                         </svg>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-2 tracking-tight">
