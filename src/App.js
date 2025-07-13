@@ -202,27 +202,37 @@ function App() {
                     const headerParts = cleanedOriginalHeader.split('|', 3); // Split into at most 3 parts: sp, ID, rest
 
                     let finalAccessionPart = uniprotId; // Default to base UniProt ID
-                    let modifiedCanonicalHeaderPart; // Declare here
+                    let modifiedCanonicalHeaderPart; 
 
                     if (headerParts.length >= 2) {
                         const originalAccessionInHeader = headerParts[1]; // e.g., P08246 or P08246-VAR_000100
 
-                        // Check if the original accession already contains "-VAR_"
-                        if (!originalAccessionInHeader.includes('-VAR_')) {
-                            // If it doesn't have -VAR_, append the mutation description (without "p.")
-                            finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}`;
+                        // --- MODIFIED LOGIC FOR UNIQUE ACCESSION PART ---
+                        if (feature.ftId) {
+                            // Prioritize ftId for uniqueness
+                            finalAccessionPart = `${originalAccessionInHeader}-${feature.ftId}`;
                         } else {
-                            // If it already has -VAR_, keep it as is
-                            finalAccessionPart = originalAccessionInHeader;
+                            // Fallback to mutation description if ftId is not available
+                            finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}`;
+                            // Optional: Add a hash of genomic location for even more uniqueness if ftId is missing and mutationDescription is not unique enough
+                            // const genomicHash = firstGenomicLoc ? btoa(firstGenomicLoc).substring(0, 8) : ''; // Simple base64 hash
+                            // finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}${genomicHash ? `-${genomicHash}` : ''}`;
                         }
+                        // --- END MODIFIED LOGIC ---
 
-                        // Reconstruct the modified header part with the new ID
+                        // Reconstruct the modified header part with the new unique ID
                         headerParts[1] = finalAccessionPart;
-                        modifiedCanonicalHeaderPart = headerParts.join('|'); // Corrected join syntax
+                        modifiedCanonicalHeaderPart = headerParts.join('|'); 
                     } else {
                         // Fallback for very simple header formats (e.g., just ">ID")
                         // In this case, always add the mutation to ensure uniqueness
-                        modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}`;
+                        if (feature.ftId) {
+                            modifiedCanonicalHeaderPart = `${uniprotId}-${feature.ftId}`;
+                        } else {
+                            modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}`;
+                            // const genomicHash = firstGenomicLoc ? btoa(firstGenomicLoc).substring(0, 8) : '';
+                            // modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}${genomicHash ? `-${genomicHash}` : ''}`;
+                        }
                         if (headerParts.length > 0) {
                             modifiedCanonicalHeaderPart = `${headerParts[0]}|${modifiedCanonicalHeaderPart}`;
                         }
