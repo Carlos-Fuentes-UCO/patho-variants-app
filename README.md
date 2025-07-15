@@ -1,5 +1,5 @@
 ## User Guide: Pathogenic Variant Generator
-Welcome to the Pathogenic Variant Generator! This powerful tool helps you identify and automatically obtain protein variant sequences that are highly relevant for your research, especially those classified as pathogenic or those with detailed descriptions.
+Welcome to the Pathogenic Variant Generator! This powerful tool helps you identify and automatically obtain protein variant sequences that are highly relevant for your research, especially those classified as pathogenic or those with detailed descriptions. You can use it in https://patho-variants.netlify.app/.
 
 ## What does this application do?
 Imagine you have a list of proteins (in a FASTA file) and you need to quickly determine if they harbor genetic variants that might be associated with diseases or are otherwise of significant interest. This application streamlines that process by performing the following key functions:
