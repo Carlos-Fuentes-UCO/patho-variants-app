@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+// import * as ReactDOM from 'react-dom'; // Removed as it's not directly used in App component
 
 // Utility function for lstrip (moved from String.prototype)
 const lstripString = (str, chars) => {
@@ -61,7 +62,7 @@ function App() {
                     uniprotIds.push(currentId);
                 }
                 // Store the complete original header line (including VAR_ if present in input)
-                canonicalHeaders[currentId] = trimmedLine;
+                canonicalHeaders[currentId] = trimmedLine; 
                 currentSeqLines = [];
             } else {
                 currentSeqLines.push(trimmedLine);
@@ -101,7 +102,7 @@ function App() {
             } else if (currentVariantCriteria === 'allWithDescription') {
                 // Include if it's a VARIANT or Natural variant AND has a description
                 // Now also check for clinicalSignificances or diseaseAssociations or association
-                if ((feature.type === "VARIANT" || feature.type === "Natural variant") &&
+                if ((feature.type === "VARIANT" || feature.type === "Natural variant") && 
                    (feature.description || (feature.clinicalSignificances && feature.clinicalSignificances.length > 0) || (feature.diseaseAssociations && feature.diseaseAssociations.length > 0) || (feature.association && feature.association.length > 0))) {
                     includeFeature = true;
                     // --- DEBUG LOG ---
@@ -125,7 +126,7 @@ function App() {
             if (includeFeature) {
                 const beginPos = parseInt(feature.begin);
                 const endPos = parseInt(feature.end);
-
+                
                 // Be more robust with wildType/mutatedType, falling back to alternativeSequence if direct fields are missing
                 let wildType = feature.wildType || (feature.alternativeSequence && feature.alternativeSequence.originalSequence);
                 let mutatedType = feature.mutatedType || (feature.alternativeSequence && feature.alternativeSequence.alternativeSequences && feature.alternativeSequence.alternativeSequences[0]);
@@ -152,11 +153,7 @@ function App() {
                     mutationDescription = `Variant at pos ${beginPos}`;
                 }
 
-                // --- MODIFICACIÓN CLAVE 1: Eliminar el signo '=' de la descripción de la mutación ---
-                mutationDescription = mutationDescription.replace(/=/g, '');
-
-
-                let modifiedSequence = '';
+                let modifiedSequence = ''; 
                 let variantSequenceList = Array.from(canonicalSequence);
                 let mutationAppliedSuccessfully = false;
 
@@ -196,9 +193,7 @@ function App() {
 
                 if (mutationAppliedSuccessfully) {
                     modifiedSequence = variantSequenceList.join('');
-                    // --- MODIFICACIÓN CLAVE 2: Eliminar el signo '=' de la secuencia modificada ---
-                    modifiedSequence = modifiedSequence.replace(/=/g, '');
-
+                    
                     const genomicLocInfo = feature.genomicLocation || [''];
                     const firstGenomicLoc = genomicLocInfo[0] || '';
 
@@ -207,31 +202,36 @@ function App() {
                     const headerParts = cleanedOriginalHeader.split('|', 3); // Split into at most 3 parts: sp, ID, rest
 
                     let finalAccessionPart = uniprotId; // Default to base UniProt ID
-                    let modifiedCanonicalHeaderPart;
+                    let modifiedCanonicalHeaderPart; 
 
                     if (headerParts.length >= 2) {
                         const originalAccessionInHeader = headerParts[1]; // e.g., P08246 or P08246-VAR_000100
 
-                        // --- MODIFICACIÓN CLAVE 3: Sustituir '=' por 'del' en feature.ftId si se usa ---
+                        // --- MODIFIED LOGIC FOR UNIQUE ACCESSION PART ---
                         if (feature.ftId) {
-                            finalAccessionPart = `${originalAccessionInHeader}-${feature.ftId.replace(/=/g, 'del')}`;
+                            // Prioritize ftId for uniqueness
+                            finalAccessionPart = `${originalAccessionInHeader}-${feature.ftId}`;
                         } else {
                             // Fallback to mutation description if ftId is not available
                             finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}`;
+                            // Optional: Add a hash of genomic location for even more uniqueness if ftId is missing and mutationDescription is not unique enough
+                            // const genomicHash = firstGenomicLoc ? btoa(firstGenomicLoc).substring(0, 8) : ''; // Simple base64 hash
+                            // finalAccessionPart = `${originalAccessionInHeader}-${mutationDescription.replace('p.', '')}${genomicHash ? `-${genomicHash}` : ''}`;
                         }
                         // --- END MODIFIED LOGIC ---
 
                         // Reconstruct the modified header part with the new unique ID
                         headerParts[1] = finalAccessionPart;
-                        modifiedCanonicalHeaderPart = headerParts.join('|');
+                        modifiedCanonicalHeaderPart = headerParts.join('|'); 
                     } else {
                         // Fallback for very simple header formats (e.g., just ">ID")
                         // In this case, always add the mutation to ensure uniqueness
-                        // --- MODIFICACIÓN CLAVE 4: Sustituir '=' por 'del' en feature.ftId si se usa ---
                         if (feature.ftId) {
-                            modifiedCanonicalHeaderPart = `${uniprotId}-${feature.ftId.replace(/=/g, 'del')}`;
+                            modifiedCanonicalHeaderPart = `${uniprotId}-${feature.ftId}`;
                         } else {
                             modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}`;
+                            // const genomicHash = firstGenomicLoc ? btoa(firstGenomicLoc).substring(0, 8) : '';
+                            // modifiedCanonicalHeaderPart = `${uniprotId}-${mutationDescription.replace('p.', '')}${genomicHash ? `-${genomicHash}` : ''}`;
                         }
                         if (headerParts.length > 0) {
                             modifiedCanonicalHeaderPart = `${headerParts[0]}|${modifiedCanonicalHeaderPart}`;
@@ -239,7 +239,7 @@ function App() {
                     }
 
                     // Determine the appropriate header tag based on pathogenicity
-                    const headerTag = isPathogenic ? 'PATHOGENIC_VARIANT' : 'VARIANT_INFO';
+                    const headerTag = isPathogenic ? 'PATHOGENIC_VARIANT' : 'VARIANT_INFO'; 
 
                     // --- MODIFIED LOGIC FOR FEATURE DESCRIPTION PART ---
                     let featureDescriptionPart = '';
@@ -547,7 +547,7 @@ That's it! With these simple steps, you will be able to efficiently use the Path
                         Download User Guide
                     </button>
                 </div>
-
+                
                 <p className="text-gray-700 text-center mb-8 text-base leading-relaxed">
                     Upload your canonical FASTA sequence file to identify and generate the sequences of their pathogenic variants.
                     Our tool streamlines the process, providing accurate results for your research.
